@@ -912,6 +912,37 @@ describe('useref()', function() {
                 done();
             }));
     });
+
+    it('should skip concatenation and pass CSS assets through with noconcat option without fail', done => {
+        let a = 0;
+
+        const testFile = getFixture('01.html');
+
+        const stream = useref({ noconcat: true });
+        useref({});
+
+        stream.on('data', newFile => {
+            should.exist(newFile.contents);
+
+            if (a === 0) {
+                getExpected('noconcat-css.html').contents.toString().should.equal(newFile.contents.toString());
+            } else if (a === 1) {
+                path.normalize(newFile.path).should.equal(path.join(__dirname, './fixtures/css/one.css'));
+            } else if (a === 2) {
+                path.normalize(newFile.path).should.equal(path.join(__dirname, './fixtures/css/two.css'));
+            }
+            ++a;
+        });
+
+        stream.once('end', () => {
+            a.should.equal(3);
+            done();
+        });
+
+        stream.write(testFile);
+
+        stream.end();
+    });
 });
 
 describe('on error', () => {
